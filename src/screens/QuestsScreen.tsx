@@ -1,209 +1,291 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Dimensions,
+  Platform,
+  Animated
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import { useHero } from "../context/HeroContext";
+import { THEME } from "../constants/Theme";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import AnimatedBackground from "../components/AnimatedBackground";
 
-const QuestsScreen: React.FC = () => {
-  const { quests, completedQuests, selectQuest, completeQuest } = useHero();
-  const [mood, setMood] = React.useState("neutro");
+const { width: windowWidth } = Dimensions.get("window");
+const isWeb = Platform.OS === 'web';
+const CONTENT_WIDTH = isWeb ? 450 : windowWidth;
+
+export default function QuestsScreen() {
+  const { quests, completedQuests, completeQuest } = useHero();
+
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const listAnim = useRef(quests.map(() => new Animated.Value(0))).current;
+
+  const progressPercent = (completedQuests.length / quests.length) * 100;
+
+  useEffect(() => {
+    // ProgressBar Animation
+    Animated.timing(progressAnim, {
+      toValue: progressPercent,
+      duration: 1200,
+      useNativeDriver: false, // width doesn't support native driver
+    }).start();
+
+    // Cascading List Animation
+    Animated.stagger(150, listAnim.map(anim =>
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      })
+    )).start();
+  }, [progressPercent]);
+
+  const progressInterpolate = progressAnim.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%']
+  });
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 32 }}
-    >
-      <Text style={styles.screenTitle}>Missões</Text>
-      <Text style={styles.screenSubtitle}>
-        Tela inspirada em passe de batalha: missões diárias e desafios especiais.
-      </Text>
-
-      <View style={styles.moodCard}>
-        <Text style={styles.moodLabel}>Como você está hoje?</Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={mood}
-            onValueChange={(itemValue) => setMood(itemValue)}
-            style={styles.picker}
-            dropdownIconColor="#FFFFFF"
-          >
-            <Picker.Item label="Neutro" value="neutro" />
-            <Picker.Item label="Animado(a)" value="animado" />
-            <Picker.Item label="Cansado(a)" value="cansado" />
-            <Picker.Item label="Estressado(a)" value="estressado" />
-            <Picker.Item label="Grato(a)" value="grato" />
-          </Picker>
+    <View style={styles.outerContainer}>
+      <AnimatedBackground />
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={styles.screenTitle}>Pit-Stop</Text>
+          <Text style={styles.headerSubtitle}>MANUTENÇÃO DIÁRIA</Text>
         </View>
-        <Text style={styles.moodHint}>
-          Este humor poderá ser usado, no produto real, para personalizar quais missões aparecem
-          primeiro.
-        </Text>
-      </View>
 
-      {quests.map((quest) => {
-        const done = completedQuests.includes(quest.id);
-        return (
-          <TouchableOpacity
-            key={quest.id}
-            activeOpacity={0.85}
-            onPress={() => selectQuest(quest)}
-          >
-            <View style={[styles.questCard, done && styles.questCardDone]}>
-              <View style={styles.questLeft}>
-                <View style={styles.questTag}>
-                  <Text style={styles.questTagText}>{quest.difficulty}</Text>
+        <View style={styles.progressCard}>
+          <View style={styles.progressHeader}>
+            <Text style={styles.progressLabel}>STATUS DE RECUPERAÇÃO</Text>
+            <Text style={styles.progressValue}>
+              {Math.round(progressPercent)}%
+            </Text>
+          </View>
+          <View style={styles.track}>
+            <Animated.View
+              style={[styles.fill, { width: progressInterpolate as any }]}
+            />
+          </View>
+        </View>
+
+        <Text style={styles.sectionLabel}>SERVIÇOS PENDENTES</Text>
+
+        {quests.map((quest, index) => {
+          const isDone = completedQuests.includes(quest.id);
+
+          const slideUp = listAnim[index].interpolate({
+            inputRange: [0, 1],
+            outputRange: [50, 0]
+          });
+
+          return (
+            <Animated.View
+              key={quest.id}
+              style={[
+                styles.qCard,
+                isDone && styles.qCardDone,
+                { opacity: listAnim[index], transform: [{ translateY: slideUp }] }
+              ]}
+            >
+              <View style={styles.qHeader}>
+                <View style={[styles.badge, { backgroundColor: getCategoryColor(quest.category) }]}>
+                  <Text style={styles.badgeText}>{quest.category.toUpperCase()}</Text>
                 </View>
-                <Text style={styles.questTitle}>{quest.title}</Text>
-                <Text style={styles.questDescription}>{quest.description}</Text>
-                <View style={styles.questMetaRow}>
-                  <Text style={styles.questCategory}>{categoryLabels[quest.category]}</Text>
-                  <Text style={styles.questXp}>+{quest.xp} XP</Text>
-                </View>
+                {quest.km && (
+                  <Text style={styles.kmReward}>+{quest.km} KM</Text>
+                )}
               </View>
-              <TouchableOpacity
-                style={[styles.button, done && styles.buttonDone]}
-                onPress={() => completeQuest(quest)}
-              >
-                <Text style={styles.buttonText}>
-                  {done ? "Concluída" : "Concluir"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
+
+              <Text style={styles.qTitle}>{quest.title}</Text>
+              <Text style={styles.qDesc}>{quest.description}</Text>
+
+              <View style={styles.qFooter}>
+                <Text style={styles.difficultyText}>{quest.difficulty.toUpperCase()}</Text>
+                <TouchableOpacity
+                  style={[styles.btn, isDone && styles.btnDone]}
+                  onPress={() => completeQuest(quest)}
+                  activeOpacity={0.7}
+                >
+                  {isDone ? (
+                    <MaterialCommunityIcons name="check-decagram" size={16} color={THEME.textSecondary} />
+                  ) : (
+                    <Text style={styles.btnText}>INICIAR</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 };
 
-export default QuestsScreen;
+function getCategoryColor(cat: string) {
+  switch (cat) {
+    case 'agua': return "rgba(0, 191, 255, 0.15)";
+    case 'movimento': return "rgba(39, 122, 201, 0.15)";
+    case 'mente': return "rgba(168, 85, 247, 0.15)";
+    case 'nutricao': return "rgba(255, 215, 0, 0.15)";
+    default: return "rgba(126, 138, 168, 0.15)";
+  }
+}
 
-const categoryLabels: Record<string, string> = {
-  agua: "Água",
-  movimento: "Movimento",
-  mente: "Mente",
-  nutricao: "Nutrição",
-};
+
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    flex: 1,
+    backgroundColor: THEME.background,
+    alignItems: 'center',
+  },
   container: {
     flex: 1,
-    backgroundColor: "#050B18",
-    paddingHorizontal: 18,
-    paddingTop: 12,
+    width: CONTENT_WIDTH,
+  },
+  contentContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  header: {
+    paddingTop: 50,
+    marginBottom: 25,
   },
   screenTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#FFFFFF",
+    color: THEME.textMain,
+    fontSize: 28,
+    fontWeight: '900',
   },
-  screenSubtitle: {
-    fontSize: 13,
-    color: "#7E8AA8",
-    marginBottom: 16,
-  },
-  moodCard: {
-    backgroundColor: "#101729",
-    borderRadius: 24,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#1B2440",
-    marginBottom: 14,
-  },
-  moodLabel: {
-    fontSize: 13,
-    color: "#9DA8C3",
-    marginBottom: 6,
-  },
-  pickerContainer: {
-    backgroundColor: "#050B18",
-    borderRadius: 12,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#141C31",
-  },
-  picker: {
-    height: 44,
-    color: "#FFFFFF",
-  },
-  moodHint: {
+  headerSubtitle: {
+    color: THEME.accent,
     fontSize: 11,
-    color: "#7E8AA8",
-    marginTop: 8,
+    fontWeight: '800',
+    letterSpacing: 2,
   },
-  questCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#0B1220",
-    borderRadius: 22,
-    padding: 14,
+  progressCard: {
+    backgroundColor: THEME.card,
+    borderRadius: 24,
+    padding: 20,
     borderWidth: 1,
-    borderColor: "#141C31",
+    borderColor: THEME.border,
+    marginBottom: 30,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  progressLabel: {
+    color: THEME.textSecondary,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  progressValue: {
+    color: THEME.accent,
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  track: {
+    height: 6,
+    backgroundColor: THEME.background,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  fill: {
+    height: '100%',
+    backgroundColor: THEME.accent,
+  },
+  sectionLabel: {
+    color: THEME.textSecondary,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 2,
+    marginBottom: 15,
+  },
+  qCard: {
+    backgroundColor: THEME.card,
+    borderRadius: 22,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: THEME.border,
+    marginBottom: 15,
+  },
+  qCardDone: {
+    opacity: 0.6,
+  },
+  qHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 10,
   },
-  questCardDone: {
-    borderColor: "#1B3A2F",
-    backgroundColor: "#07141A",
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
-  questLeft: {
-    flex: 1,
-    marginRight: 10,
+  badgeText: {
+    color: THEME.textMain,
+    fontSize: 8,
+    fontWeight: '900',
   },
-  questTag: {
-    alignSelf: "flex-start",
-    backgroundColor: "#16213A",
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    marginBottom: 4,
-  },
-  questTagText: {
-    fontSize: 10,
-    color: "#E5F4FF",
-    fontWeight: "700",
-    textTransform: "uppercase",
-  },
-  questTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  questDescription: {
-    fontSize: 13,
-    color: "#9DA8C3",
-    marginTop: 2,
-  },
-  questMetaRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 6,
-  },
-  questCategory: {
+  kmReward: {
+    color: THEME.accent,
     fontSize: 12,
-    color: "#7E8AA8",
+    fontWeight: '900',
   },
-  questXp: {
+  qTitle: {
+    color: THEME.textMain,
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  qDesc: {
+    color: THEME.textSecondary,
     fontSize: 13,
-    color: "#00E28A",
-    fontWeight: "600",
+    lineHeight: 18,
+    marginBottom: 18,
   },
-  button: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: "#00E28A",
+  qFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
+    paddingTop: 15,
   },
-  buttonDone: {
-    backgroundColor: "#273146",
+  difficultyText: {
+    color: THEME.textSecondary,
+    fontSize: 9,
+    fontWeight: '800',
   },
-  buttonText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#050B18",
+  btn: {
+    backgroundColor: THEME.accent,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  btnDone: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: THEME.border,
+  },
+  btnText: {
+    color: THEME.textMain,
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  btnTextDone: {
+    color: THEME.textSecondary,
   },
 });

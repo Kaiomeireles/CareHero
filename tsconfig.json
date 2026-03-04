@@ -7,7 +7,25 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "types": ["react", "react-native", "react-dom"]
+    "esModuleInterop": true,
+    "target": "es2020",
+    "lib": [
+      "es2020",
+      "dom"
+    ],
+    "skipLibCheck": true,
+    "types": [
+      "react",
+      "react-native",
+      "react-dom"
+    ]
   },
-  "include": ["**/*.ts", "**/*.tsx"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "CareHero"
+  ]
 }

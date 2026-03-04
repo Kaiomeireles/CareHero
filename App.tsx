@@ -1,5 +1,5 @@
 import React from "react";
-import { NavigationContainer, DarkTheme } from "@react-navigation/native";
+import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { HeroProvider } from "./src/context/HeroContext";
 import LoginScreen from "./src/screens/LoginScreen";
@@ -15,12 +15,12 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const navTheme = {
-  ...DarkTheme,
+  ...DefaultTheme,
   colors: {
-    ...DarkTheme.colors,
-    background: "#050B18",
-    card: "#050B18",
-    primary: "#00E28A",
+    ...DefaultTheme.colors,
+    background: "#F2F5F8",
+    card: "#FFFFFF",
+    primary: "#277ac9",
   },
 };
 

@@ -1,116 +1,316 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { View, Text, StyleSheet, ScrollView, Dimensions, Platform, Image, Animated } from "react-native";
 import { useHero } from "../context/HeroContext";
+import { THEME } from "../constants/Theme";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import AnimatedBackground from "../components/AnimatedBackground";
 
-const ProfileScreen: React.FC = () => {
-  const { level, league, streak, xp } = useHero();
+const { width: windowWidth } = Dimensions.get("window");
+const isWeb = Platform.OS === 'web';
+const CONTENT_WIDTH = isWeb ? 450 : windowWidth;
+
+export default function ProfileScreen() {
+  const { level, league, streak, kmProgress, nextLevelKm, currentLevelKm } = useHero();
+
+  const progressPercent = Math.min((kmProgress / 50) * 100, 100);
+
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const barAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(barAnim, {
+        toValue: progressPercent,
+        duration: 1200,
+        useNativeDriver: false,
+      })
+    ]).start();
+  }, [progressPercent]);
+
+  const barWidth = barAnim.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%']
+  });
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 32 }}
-    >
-      <Text style={styles.screenTitle}>Perfil do Herói</Text>
-      <Text style={styles.screenSubtitle}>
-        Tela exigida na atividade como visão de perfil / personagem, com elementos de RPG.
-      </Text>
-
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Status</Text>
-        <View style={styles.row}>
-          <View style={styles.statBlock}>
-            <Text style={styles.statLabel}>Nível</Text>
-            <Text style={styles.statValue}>{level}</Text>
+    <View style={styles.outerContainer}>
+      <AnimatedBackground />
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View style={{ opacity: opacityAnim, transform: [{ translateY: slideAnim }] }}>
+          <View style={styles.header}>
+            <Text style={styles.screenTitle}>Perfil</Text>
+            <Text style={styles.headerSubtitle}>CENTRAL DE COMANDO</Text>
           </View>
-          <View style={styles.statBlock}>
-            <Text style={styles.statLabel}>Liga</Text>
-            <Text style={styles.statValue}>{league}</Text>
-          </View>
-          <View style={styles.statBlock}>
-            <Text style={styles.statLabel}>Streak</Text>
-            <Text style={styles.statValue}>{streak} dias</Text>
-          </View>
-        </View>
-        <Text style={styles.xpText}>{xp} XP acumulados na temporada atual.</Text>
-      </View>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Função do herói</Text>
-        <Text style={styles.bodyText}>
-          Neste protótipo, o herói está configurado como um Guardião do ecossistema Care Plus: ele
-          recebe missões relacionadas a movimento, hidratação, mente e nutrição.
-        </Text>
-      </View>
+          <View style={styles.profileHeader}>
+            <View style={styles.avatarWrap}>
+              <Image
+                source={require("../assets/hero-portrait.png")}
+                style={styles.avatar}
+              />
+            </View>
+            <View style={styles.profileInfo}>
+              <Text style={styles.pName}>KAIOMEIRELES</Text>
+              <View style={styles.tagWrap}>
+                <View style={styles.tag}>
+                  <Text style={styles.tagText}>PILOTO ELITE</Text>
+                </View>
+                <View style={[styles.tag, { backgroundColor: THEME.border }]}>
+                  <Text style={[styles.tagText, { color: THEME.accent }]}>{league.toUpperCase()}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Slots de talentos (conceito)</Text>
-        <Text style={styles.bodyText}>
-          Em uma versão futura, o CareHero poderia permitir que cada pessoa equipasse talentos
-          (ex.: foco em mente, foco em performance, foco em nutrição), personalizando as missões.
-        </Text>
-      </View>
-    </ScrollView>
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <Text style={styles.statLabel}>NÍVEL DO MOTOR</Text>
+              <Text style={styles.statValue}>{level}</Text>
+              <View style={styles.xpBarTrack}>
+                <Animated.View style={[styles.xpBarFill, { width: barWidth as any }]} />
+              </View>
+              <Text style={styles.xpDetail}>{kmProgress.toFixed(1)} KM / 50 KM Para Próximo Nível</Text>
+            </View>
+
+            <View style={styles.row}>
+              <View style={styles.miniStat}>
+                <Text style={styles.miniLabel}>OFENSIVA</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <MaterialCommunityIcons name="fire" size={20} color={THEME.danger} style={{ marginRight: 4 }} />
+                  <Text style={styles.miniValue}>{streak}D</Text>
+                </View>
+              </View>
+              <View style={styles.miniStat}>
+                <Text style={styles.miniLabel}>RANKING</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <MaterialCommunityIcons name="trophy" size={20} color="#FFD700" style={{ marginRight: 4 }} />
+                  <Text style={styles.miniValue}>#420</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </Animated.View>
+
+        <Animated.View style={{ opacity: opacityAnim, transform: [{ translateY: slideAnim }] }}>
+          <Text style={styles.sectionLabel}>ESPECIALIZAÇÕES DO PILOTO</Text>
+
+          <View style={styles.specCard}>
+            <View style={styles.specHeader}>
+              <Text style={styles.specTitle}>NÚCLEO DE RESISTÊNCIA</Text>
+              <Text style={styles.specActive}>ATIVO</Text>
+            </View>
+            <Text style={styles.specDesc}>
+              Otimizado para squads de alta quilometragem e saída constante de energia.
+            </Text>
+          </View>
+
+          <View style={[styles.specCard, { opacity: 0.4 }]}>
+            <View style={styles.specHeader}>
+              <Text style={styles.specTitle}>UNIDADE DE RECUPERAÇÃO</Text>
+              <Text style={styles.specLocked}>BLOQUEADO</Text>
+            </View>
+            <Text style={styles.specDesc}>
+              Desbloqueie no Nível 10 para melhorar a eficiência do motor em 15%.
+            </Text>
+          </View>
+        </Animated.View>
+
+      </ScrollView>
+    </View>
   );
 };
 
-export default ProfileScreen;
+
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    flex: 1,
+    backgroundColor: THEME.background,
+    alignItems: 'center',
+  },
   container: {
     flex: 1,
-    backgroundColor: "#050B18",
-    paddingHorizontal: 18,
-    paddingTop: 12,
+    width: CONTENT_WIDTH,
+  },
+  contentContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  header: {
+    paddingTop: 50,
+    marginBottom: 25,
   },
   screenTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#FFFFFF",
+    color: THEME.textMain,
+    fontSize: 28,
+    fontWeight: '900',
   },
-  screenSubtitle: {
-    fontSize: 13,
-    color: "#7E8AA8",
-    marginBottom: 16,
+  headerSubtitle: {
+    color: THEME.accent,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 2,
   },
-  card: {
-    backgroundColor: "#0B1220",
-    borderRadius: 24,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#141C31",
-    marginBottom: 14,
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 30,
   },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#FFFFFF",
-    marginBottom: 8,
+  avatarWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: THEME.accent,
+    padding: 3,
   },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  avatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 35,
   },
-  statBlock: {
+  profileInfo: {
+    marginLeft: 20,
     flex: 1,
   },
+  pName: {
+    color: THEME.textMain,
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: -1,
+  },
+  tagWrap: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  tag: {
+    backgroundColor: 'rgba(39, 122, 201, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  tagText: {
+    color: THEME.accent,
+    fontSize: 8,
+    fontWeight: '900',
+  },
+  statsGrid: {
+    marginBottom: 30,
+  },
+  statCard: {
+    backgroundColor: THEME.card,
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: THEME.border,
+    marginBottom: 12,
+  },
   statLabel: {
-    fontSize: 11,
-    color: "#7E8AA8",
-    textTransform: "uppercase",
-    marginBottom: 2,
+    color: THEME.textSecondary,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.5,
   },
   statValue: {
-    fontSize: 15,
-    color: "#FFFFFF",
-    fontWeight: "700",
+    color: THEME.textMain,
+    fontSize: 32,
+    fontWeight: '900',
+    marginVertical: 4,
   },
-  xpText: {
-    marginTop: 10,
-    fontSize: 13,
-    color: "#9DA8C3",
+  xpBarTrack: {
+    height: 4,
+    backgroundColor: THEME.background,
+    borderRadius: 2,
+    marginVertical: 10,
+    overflow: 'hidden',
   },
-  bodyText: {
-    fontSize: 13,
-    color: "#9DA8C3",
+  xpBarFill: {
+    height: '100%',
+    backgroundColor: THEME.accent,
+  },
+  xpDetail: {
+    color: THEME.textSecondary,
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  miniStat: {
+    flex: 1,
+    backgroundColor: THEME.card,
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: THEME.border,
+  },
+  miniLabel: {
+    color: THEME.textSecondary,
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  miniValue: {
+    color: THEME.accent,
+    fontSize: 18,
+    fontWeight: '900',
+    marginTop: 2,
+  },
+  sectionLabel: {
+    color: THEME.textSecondary,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 2,
+    marginBottom: 15,
+  },
+  specCard: {
+    backgroundColor: THEME.card,
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: THEME.border,
+    marginBottom: 12,
+  },
+  specHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  specTitle: {
+    color: THEME.textMain,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  specActive: {
+    color: THEME.accent,
+    fontSize: 8,
+    fontWeight: '900',
+  },
+  specLocked: {
+    color: THEME.textSecondary,
+    fontSize: 8,
+    fontWeight: '900',
+  },
+  specDesc: {
+    color: THEME.textSecondary,
+    fontSize: 12,
+    lineHeight: 18,
   },
 });

@@ -1,180 +1,263 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView, Image } from "react-native";
+import React, { useEffect, useRef } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Dimensions,
+  Platform,
+  Animated
+} from "react-native";
 import { useHero } from "../context/HeroContext";
+import { THEME } from "../constants/Theme";
+import AnimatedBackground from "../components/AnimatedBackground";
 
-const GlobalScreen: React.FC = () => {
+const { width: windowWidth } = Dimensions.get("window");
+const isWeb = Platform.OS === 'web';
+const CONTENT_WIDTH = isWeb ? 450 : windowWidth;
+
+export default function GlobalScreen() {
   const { globalScore } = useHero();
 
   const pyramidStages = [
-    "Consciência",
-    "Rotina",
-    "Disciplina",
-    "Equilíbrio",
-    "Harmonia",
-    "Conexão",
-    "Humanidade Saudável",
+    { title: "HABITE", desc: "Conscientização básica", icon: "🌱" },
+    { title: "IGNITE", desc: "Início da rotina ativa", icon: "⚡" },
+    { title: "DRIVE", desc: "Disciplina e constância", icon: "🏎️" },
+    { title: "MINT", desc: "Equilíbrio e frescor", icon: "🌿" },
+    { title: "GLOW", desc: "Harmonia corporal", icon: "✨" },
+    { title: "LINK", desc: "Conexão em squads", icon: "🌐" },
+    { title: "HERO", desc: "Humanidade Saudável", icon: "🏆" },
   ];
 
   const currentStageIndex = Math.min(
     Math.floor(globalScore / 8000),
     pyramidStages.length - 1
   );
-  const currentStage = pyramidStages[currentStageIndex];
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 32 }}
-    >
-      <Text style={styles.screenTitle}>Índice Global</Text>
-      <Text style={styles.screenSubtitle}>
-        Painel em estilo de jogo para leitura coletiva da saúde dos heróis.
-      </Text>
-
-      <View style={styles.topRow}>
-        <View style={styles.globalCard}>
-          <Text style={styles.cardLabel}>Pontuação atual</Text>
-          <Text style={styles.globalNumber}>{globalScore.toLocaleString()} pts</Text>
-          <Text style={styles.globalText}>
-            No futuro, este indicador pode ser conectado à plataforma oficial da operadora, dando
-            uma visão agregada de engajamento em hábitos saudáveis.
-          </Text>
+    <View style={styles.outerContainer}>
+      <AnimatedBackground />
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={styles.brandText}>CareHero</Text>
+          <Text style={styles.headerSubtitle}>IMPACTO COLETIVO</Text>
         </View>
-        <View style={styles.illustrationCard}>
-          <Image
-            source={require("../assets/global-bg.png")}
-            style={styles.illustration}
-          />
+
+        {/* World Odometer */}
+        <View style={styles.worldHOCard}>
+          <Text style={styles.hoLabel}>HODÔMETRO MUNDIAL</Text>
+          <Text style={styles.hoValue}>{globalScore.toLocaleString()}</Text>
+          <Text style={styles.hoUnit}>KM COLETIVOS RODADOS</Text>
+          <View style={styles.liveBadge}>
+            <View style={styles.dot} />
+            <Text style={styles.liveText}>+124 KM/MIN</Text>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardLabel}>Pirâmide da Humanidade Saudável</Text>
-        <Text style={styles.stageNow}>Estágio atual: {currentStage}</Text>
+        <Text style={styles.sectionTitle}>PIRÂMIDE DA HUMANIDADE</Text>
 
-        <View style={styles.pyramid}>
+        <View style={styles.pyramidContainer}>
           {pyramidStages.map((stage, index) => {
-            const active = index <= currentStageIndex;
+            const isActive = index <= currentStageIndex;
+            const isCurrent = index === currentStageIndex;
+
             return (
-              <View key={stage} style={styles.pyramidRow}>
-                <View
-                  style={[
-                    styles.pyramidBar,
-                    { opacity: active ? 1 : 0.25, width: `${40 + index * 8}%` },
-                  ]}
-                />
-                <Text style={[styles.pyramidLabel, !active && { opacity: 0.6 }]}>
-                  {stage}
-                </Text>
+              <View
+                key={stage.title}
+                style={[
+                  styles.pyramidTier,
+                  isActive && styles.activeTier,
+                  isCurrent && styles.currentTier
+                ]}
+              >
+                <View style={styles.tierLeft}>
+                  <Text style={[styles.tierIcon, !isActive && { opacity: 0.3 }]}>{stage.icon}</Text>
+                  <View>
+                    <Text style={[styles.tierTitle, !isActive && { color: '#495576' }]}>{stage.title}</Text>
+                    <Text style={[styles.tierDesc, !isActive && { color: '#273146' }]}>{stage.desc}</Text>
+                  </View>
+                </View>
+                {isActive && (
+                  <View style={styles.activeIndicator}>
+                    <View style={[styles.pulseDot, isCurrent && styles.pulsing]} />
+                    <Text style={styles.activeText}>{isCurrent ? 'ESTÁGIO ATUAL' : 'CONCLUÍDO'}</Text>
+                  </View>
+                )}
               </View>
             );
-          })}
+          }).reverse()}
         </View>
 
-        <Text style={styles.globalText}>
-          Cada degrau representa uma etapa de maturidade: começamos em Consciência e podemos chegar
-          até uma Humanidade Saudável conectada, com squads, eventos e jornadas contínuas.
-        </Text>
-      </View>
-    </ScrollView>
+        <View style={styles.infoCard}>
+          <Text style={styles.infoText}>
+            Cada herói conta. Sua quilometragem individual é injetada no motor da humanidade.
+            Quando atingirmos o estágio <Text style={{ color: THEME.accent, fontWeight: '900' }}>HERO</Text>,
+            a CarePlus liberará o maior evento de Triathlon da história.
+          </Text>
+        </View>
+      </ScrollView>
+    </View>
   );
 };
 
-export default GlobalScreen;
+
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    flex: 1,
+    backgroundColor: THEME.background,
+    alignItems: 'center',
+  },
   container: {
     flex: 1,
-    backgroundColor: "#050B18",
-    paddingHorizontal: 18,
-    paddingTop: 12,
+    width: CONTENT_WIDTH,
   },
-  screenTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#FFFFFF",
+  contentContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
   },
-  screenSubtitle: {
-    fontSize: 13,
-    color: "#7E8AA8",
-    marginBottom: 16,
+  header: {
+    paddingTop: 50,
+    marginBottom: 25,
   },
-  topRow: {
-    flexDirection: "row",
-    marginBottom: 14,
-  },
-  globalCard: {
-    flex: 2,
-    backgroundColor: "#101729",
-    borderRadius: 24,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#1B2440",
-    marginRight: 10,
-  },
-  cardLabel: {
-    fontSize: 11,
-    color: "#7E8AA8",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  globalNumber: {
+  brandText: {
+    color: THEME.textMain,
     fontSize: 24,
-    fontWeight: "700",
-    color: "#00E28A",
-    marginBottom: 6,
+    fontWeight: '900',
+    letterSpacing: -1,
   },
-  globalText: {
-    fontSize: 13,
-    color: "#9DA8C3",
+  headerSubtitle: {
+    color: THEME.accent,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 2,
   },
-  illustrationCard: {
-    flex: 1,
-    backgroundColor: "#0B1220",
+  worldHOCard: {
+    backgroundColor: THEME.card,
     borderRadius: 24,
+    padding: 30,
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: "#141C31",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 8,
+    borderColor: THEME.border,
+    marginBottom: 30,
   },
-  illustration: {
-    width: "100%",
-    height: undefined,
-    aspectRatio: 1,
-    borderRadius: 18,
+  hoLabel: {
+    color: THEME.textSecondary,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 2,
+    marginBottom: 10,
   },
-  card: {
-    backgroundColor: "#0B1220",
-    borderRadius: 24,
+  hoValue: {
+    color: THEME.textMain,
+    fontSize: 48,
+    fontWeight: '900',
+    marginVertical: 4,
+  },
+  hoUnit: {
+    color: THEME.textSecondary,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(39, 122, 201, 0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    marginTop: 15,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: THEME.accent,
+    marginRight: 6,
+  },
+  liveText: {
+    color: THEME.accent,
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  sectionTitle: {
+    color: THEME.textSecondary,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 2,
+    marginBottom: 15,
+  },
+  pyramidContainer: {
+    gap: 8,
+    marginBottom: 20,
+  },
+  pyramidTier: {
+    backgroundColor: THEME.card,
+    borderRadius: 16,
     padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: "#141C31",
-    marginTop: 10,
+    borderColor: 'transparent',
   },
-  stageNow: {
+  activeTier: {
+    borderColor: THEME.border,
+  },
+  currentTier: {
+    borderColor: THEME.accent,
+    backgroundColor: 'rgba(39, 122, 201, 0.05)',
+  },
+  tierLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 15,
+  },
+  tierIcon: {
+    fontSize: 24,
+  },
+  tierTitle: {
+    color: THEME.textMain,
     fontSize: 14,
-    color: "#00E28A",
-    fontWeight: "600",
-    marginBottom: 8,
+    fontWeight: '900',
   },
-  pyramid: {
-    marginBottom: 12,
+  tierDesc: {
+    color: THEME.textSecondary,
+    fontSize: 10,
   },
-  pyramidRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 6,
+  activeIndicator: {
+    alignItems: 'flex-end',
   },
-  pyramidBar: {
-    height: 10,
-    backgroundColor: "#00E28A",
-    borderRadius: 999,
-    marginRight: 10,
+  activeText: {
+    color: THEME.accent,
+    fontSize: 8,
+    fontWeight: '900',
+    marginTop: 4,
   },
-  pyramidLabel: {
+  pulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: THEME.accent,
+  },
+  pulsing: {
+    // shadow logic would go here
+  },
+  infoCard: {
+    padding: 20,
+    backgroundColor: 'rgba(39, 122, 201, 0.05)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: THEME.border,
+  },
+  infoText: {
+    color: THEME.textSecondary,
     fontSize: 13,
-    color: "#9DA8C3",
+    lineHeight: 20,
+    textAlign: 'center',
   },
 });
