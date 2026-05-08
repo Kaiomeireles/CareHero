@@ -52,7 +52,9 @@ Configuramos uma pipeline automatizada no GitHub Actions (`.github/workflows/sec
 
 ### 2.2 Evidências de Execução
 
-*(Recomendação: Tire um print da aba "Actions" do GitHub mostrando o fluxo verde executado e cole aqui para substituir os textos abaixo e impressionar o professor)*
+Aqui está a evidência da pipeline sendo executada automaticamente na nuvem através do Github Actions:
+
+![Pipeline de Segurança Executada](./security_pipeline.webp)
 
 **Evidência 1: Log de execução do `npm audit` (SCA)**
 ```text
