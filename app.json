@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "CareHero",
+    "slug": "carehero",
+    "version": "1.0.0",
+    "plugins": [
+      "expo-secure-store"
+    ]
+  }
+}
