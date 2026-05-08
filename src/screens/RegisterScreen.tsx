@@ -6,20 +6,52 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  Platform
+  Platform,
+  Alert
 } from "react-native";
 import { THEME } from "../constants/Theme";
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { StorageService } from '../services/storageService';
+
+type RootStackParamList = {
+  Login: undefined;
+  Register: undefined;
+  MainTabs: undefined;
+};
+
+type RegisterScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Register'>;
+
+interface Props {
+  navigation: RegisterScreenNavigationProp;
+}
 
 const { width: windowWidth } = Dimensions.get("window");
 const isWeb = Platform.OS === 'web';
 const CONTENT_WIDTH = isWeb ? 450 : windowWidth;
 
-export default function RegisterScreen({ navigation }: any) {
+export default function RegisterScreen({ navigation }: Props) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
+    if (!name || name.trim().length < 3) {
+      Alert.alert("Falha no Recrutamento", "O nome deve ter pelo menos 3 caracteres.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert("Falha no Recrutamento", "Por favor, insira um e-mail válido.");
+      return;
+    }
+    
+    if (password.length < 6) {
+      Alert.alert("Falha no Recrutamento", "A senha deve conter no mínimo 6 caracteres.");
+      return;
+    }
+
+    await StorageService.saveUserSession({ email, isLoggedIn: true });
     navigation.replace("MainTabs");
   };
 

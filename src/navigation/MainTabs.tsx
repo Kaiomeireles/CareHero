@@ -46,7 +46,7 @@ export default function MainTabs() {
               marginTop: -5,
             },
             tabBarIcon: ({ color, size }) => {
-              let iconName: any;
+              let iconName: React.ComponentProps<typeof MaterialCommunityIcons>['name'] = 'speedometer';
               if (route.name === 'Home') iconName = 'speedometer';
               else if (route.name === 'Quests') iconName = 'clipboard-check-outline';
               else if (route.name === 'Global') iconName = 'earth';

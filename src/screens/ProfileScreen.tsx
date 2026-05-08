@@ -1,15 +1,28 @@
 import React, { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, ScrollView, Dimensions, Platform, Image, Animated } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Dimensions, Platform, Image, Animated, TouchableOpacity } from "react-native";
 import { useHero } from "../context/HeroContext";
 import { THEME } from "../constants/Theme";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AnimatedBackground from "../components/AnimatedBackground";
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { StorageService } from '../services/storageService';
 
 const { width: windowWidth } = Dimensions.get("window");
 const isWeb = Platform.OS === 'web';
 const CONTENT_WIDTH = isWeb ? 450 : windowWidth;
 
-export default function ProfileScreen() {
+type RootStackParamList = {
+  Login: undefined;
+  MainTabs: undefined;
+};
+
+type ProfileScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
+
+interface Props {
+  navigation: ProfileScreenNavigationProp;
+}
+
+export default function ProfileScreen({ navigation }: Props) {
   const { level, league, streak, kmProgress, nextLevelKm, currentLevelKm } = useHero();
 
   const progressPercent = Math.min((kmProgress / 50) * 100, 100);
@@ -42,6 +55,11 @@ export default function ProfileScreen() {
     inputRange: [0, 100],
     outputRange: ['0%', '100%']
   });
+
+  const handleLogout = async () => {
+    await StorageService.clearUserSession();
+    navigation.replace('Login');
+  };
 
   return (
     <View style={styles.outerContainer}>
@@ -128,6 +146,11 @@ export default function ProfileScreen() {
               Desbloqueie no Nível 10 para melhorar a eficiência do motor em 15%.
             </Text>
           </View>
+
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+            <MaterialCommunityIcons name="logout" size={20} color={THEME.danger} />
+            <Text style={styles.logoutText}>DESLIGAR MOTOR (LOGOUT)</Text>
+          </TouchableOpacity>
         </Animated.View>
 
       </ScrollView>
@@ -312,5 +335,23 @@ const styles = StyleSheet.create({
     color: THEME.textSecondary,
     fontSize: 12,
     lineHeight: 18,
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 69, 58, 0.1)',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 69, 58, 0.3)',
+  },
+  logoutText: {
+    color: THEME.danger,
+    fontSize: 12,
+    fontWeight: '900',
+    marginLeft: 10,
+    letterSpacing: 1,
   },
 });

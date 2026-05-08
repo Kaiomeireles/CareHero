@@ -13,12 +13,26 @@ import {
 import { THEME } from "../constants/Theme";
 import AnimatedBackground from "../components/AnimatedBackground";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { StorageService } from '../services/storageService';
+
+type RootStackParamList = {
+  Login: undefined;
+  Register: undefined;
+  MainTabs: undefined;
+};
+
+type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
+
+interface Props {
+  navigation: LoginScreenNavigationProp;
+}
 
 const { width: windowWidth } = Dimensions.get("window");
 const isWeb = Platform.OS === 'web';
 const CONTENT_WIDTH = isWeb ? 450 : windowWidth;
 
-const LoginScreen = ({ navigation }: any) => {
+const LoginScreen = ({ navigation }: Props) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -42,13 +56,22 @@ const LoginScreen = ({ navigation }: any) => {
     ]).start(() => setShowSplash(false));
   }, []);
 
-  const handleLogin = () => {
-    if (email && password) {
-      Alert.alert("Motor Ligado", "Sistemas nominais. Pronto para a largada!");
-      navigation.navigate("MainTabs");
-    } else {
-      Alert.alert("Falha na Partida", "Verifique suas credenciais e tente novamente.");
+  const handleLogin = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (!emailRegex.test(email)) {
+      Alert.alert("Falha na Partida", "Por favor, insira um e-mail válido.");
+      return;
     }
+    
+    if (password.length < 6) {
+      Alert.alert("Falha na Partida", "A senha deve conter no mínimo 6 caracteres.");
+      return;
+    }
+
+    await StorageService.saveUserSession({ email, isLoggedIn: true });
+    Alert.alert("Motor Ligado", "Sistemas nominais. Pronto para a largada!");
+    navigation.navigate("MainTabs");
   };
 
   return (

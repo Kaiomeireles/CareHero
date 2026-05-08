@@ -87,3 +87,14 @@ Use os dados a seguir para acessar a visualização completa na banca:
 ---
 
 O CareHero agora reflete um ambiente **limpo, de saúde, e totalmente metrificado por avanço real (KM)**. Boa jornada no Hodômetro Humano!
+
+---
+
+# 📸 **8. Demonstração do Aplicativo (Sprint 3)**
+
+### Screenshots
+*(Demonstração em vídeo cobrindo todas as telas abaixo)*
+
+### Vídeo de Demonstração
+*(Gravação de uso gerada automaticamente)*
+![Demonstração do CareHero](./docs/carehero_demo.webp)
