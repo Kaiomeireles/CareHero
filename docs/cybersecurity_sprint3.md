@@ -38,7 +38,7 @@ Utilizando a metodologia **STRIDE**:
 
 ### 1.4 Propostas de Mitigação
 - **Spoofing & Elevation of Privilege:** Implementar MFA (Múltiplos Fatores de Autenticação) via Firebase e aplicar rigoroso RBAC (Role-Based Access Control) via Firestore Security Rules.
-- **Tampering & Repudiation:** Manter logs imutáveis e trilhas de auditoria das ações (ex: logs de quando e quem marcou a medicação como tomada).
+- **Tampering & Repudiation:** Manter logs imutáveis e trilhas de auditoria das ações (ex: logs de quando e quem registrou uma quilometragem para evitar fraudes no ranking).
 - **Information Disclosure:** Garantir criptografia in-transit (TLS/HTTPS obrigatório) e at-rest, além de proteger credenciais do app (obfuscação).
 - **Supply Chain (SCA):** Realizar atualizações e varreduras constantes das bibliotecas e pacotes utilizados (`npm audit` via CI/CD).
 
