@@ -2,6 +2,14 @@
 
 Este documento apresenta as análises de segurança e configurações realizadas para a Sprint 3 do projeto CareHero.
 
+### 👥 Integrantes do Grupo
+* **Kaio Vinicius Meireles Alves** – RM553282
+* **Lucas Alves de Souza** – RM553956
+* **Lucas de Freitas Pagung** – RM553242
+* **Guilherme Fernandes de Freitas** – RM554323
+* **João Pedro Chizzolini de Freitas** – RM553172
+
+---
 ## 1. Análise de Ameaças e Cadeia de Suprimentos
 
 ### 1.1 Identificação de Riscos Específicos
